@@ -1,7 +1,7 @@
 const AppError = require('../errors/app.error');
 
 function validateId(id) {
-  if (!/^[a-f0-9]{24}$/i.test(id)) throw new AppError('INVALID_ID');
+  if (typeof id !== 'string' || !/^[a-f0-9]{24}$/i.test(id)) throw new AppError('INVALID_ID');
 }
 
 function validateStatus(status, allowed) {

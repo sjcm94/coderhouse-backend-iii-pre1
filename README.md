@@ -144,3 +144,20 @@ Swagger agrupa los endpoints en **Users, Orders, Deliveries, Mocks, Logger y Pro
 4. Para ver `INVALID_MOCK_QUANTITY` (400), prueba `GET /api/mocks/users?qty=-1`. Para los seis niveles de logs, ejecuta `GET /api/logger/test` en `development` o `test`.
 
 Los GET de Mocks generan vistas previas. Para consultar pedidos y entregas en MongoDB, usa los IDs que aparecen en los listados después de la carga.
+
+## Módulo 6 | Testing funcional con Mocha, Chai y Supertest
+
+La suite usa **Mocha** para ejecutar las pruebas, **Chai** para validar los cuerpos de respuesta y **Supertest** para enviar solicitudes al importar `src/app.js`. Para correrla, ejecuta `npm ci` y luego `npm test`. No hace falta iniciar ShipNow ni elegir un puerto para las solicitudes de prueba.
+
+### Base de datos y entorno de testing
+
+- Usa una instancia de MongoDB local o dedicada a pruebas. Por defecto la suite conecta a `mongodb://127.0.0.1:27017`.
+- Si usas otra instancia, copia `.env.test.example` como `.env.test` y define `TEST_MONGODB_URI` con su URI. También puedes suministrar esa variable en la terminal.
+- El script establece `NODE_ENV=test` y crea una base temporal con un nombre que comienza con `shipnow_test_`. El nombre se genera en cada ejecución, aunque la URI incluya otro nombre de base. La cuenta de MongoDB debe permitir crear y eliminar esa base temporal.
+- Los hooks limpian las colecciones de prueba antes de cada caso, eliminan la base temporal al terminar y cierran la conexión. La suite genera sus propios usuarios, pedidos y mocks.
+
+### Qué se prueba
+
+Se prueban los listados de usuarios y productos, la creación y consulta de pedidos, las entregas, los filtros de estado, la generación y carga de mocks, el endpoint de logger, Swagger y el formato común de errores. Los casos negativos validan el código HTTP, el código interno y el mensaje.
+
+La creación se prueba con `POST /api/orders`. El body incluye `userId` de un cliente existente e `items` con nombre y cantidad de cada artículo. El pedido se crea en `PENDING` y admite `priority` opcional. El filtro por estado se prueba en los listados. Swagger incluye el contrato del POST y sus errores.

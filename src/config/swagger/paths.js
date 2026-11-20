@@ -104,6 +104,22 @@ module.exports = {
         500: internalError,
       },
     },
+    post: {
+      tags: ['Orders'],
+      summary: 'Crear un pedido',
+      description: 'Usa el ID de un cliente existente con rol USER. El pedido se crea con estado PENDING.',
+      requestBody: jsonBody('NewOrder'),
+      responses: {
+        201: success('Pedido creado.', ref('Order')),
+        400: errorResponse(
+          'ID, cliente, prioridad, items o JSON inválido.',
+          'INVALID_ID', 'INVALID_ORDER_USER', 'INVALID_ORDER_PRIORITY', 'INVALID_ORDER_ITEMS', 'INVALID_JSON',
+        ),
+        404: errorResponse('Cliente inexistente.', 'USER_NOT_FOUND'),
+        ...bodyErrors,
+        500: internalError,
+      },
+    },
   },
   '/api/orders/{id}': {
     get: {

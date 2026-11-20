@@ -6,6 +6,10 @@ function getAll() {
   return User.find().select(fields).sort({ name: 1, _id: 1 }).lean();
 }
 
+function getById(id) {
+  return User.findById(id).select(fields).lean();
+}
+
 async function create(data) {
   try {
     const user = await User.create(data);
@@ -20,4 +24,4 @@ async function create(data) {
   }
 }
 
-module.exports = { getAll, create };
+module.exports = { getAll, getById, create };

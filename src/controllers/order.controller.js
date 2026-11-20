@@ -8,4 +8,8 @@ async function getById(req, res) {
   res.status(200).json(await orderService.getById(req.params.id));
 }
 
-module.exports = { getAll, getById };
+async function create(req, res) {
+  res.status(201).json(await orderService.create(req.body));
+}
+
+module.exports = { getAll, getById, create };

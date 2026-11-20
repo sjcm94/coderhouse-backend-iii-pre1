@@ -41,6 +41,15 @@ const schemas = {
       quantity: { type: 'integer', minimum: 1, maximum: Number.MAX_SAFE_INTEGER, example: 1 },
     },
   },
+  NewOrder: {
+    type: 'object',
+    required: ['userId', 'items'],
+    properties: {
+      userId: id,
+      priority: { ...values(ORDER_PRIORITY), default: ORDER_PRIORITY.NORMAL },
+      items: { ...arrayOf('OrderItem'), minItems: 1 },
+    },
+  },
   Order: {
     type: 'object',
     required: ['_id', 'userId', 'status', 'priority'],

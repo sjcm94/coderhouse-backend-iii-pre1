@@ -11,4 +11,10 @@ function getById(id) {
   return Order.findById(id).select(fields).lean();
 }
 
-module.exports = { getAll, getById };
+async function create(data) {
+  const order = await Order.create(data);
+  const { _id, userId, status, priority, items } = order.toObject();
+  return { _id, userId, status, priority, items };
+}
+
+module.exports = { getAll, getById, create };
