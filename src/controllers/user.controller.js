@@ -11,4 +11,9 @@ async function create(req, res) {
   res.status(201).json(user);
 }
 
-module.exports = { getAll, create };
+async function uploadFile(req, res) {
+  const updated = await userService.uploadFile(req.params.id, req.file, req.body?.documentType);
+  res.status(201).json({ user: updated });
+}
+
+module.exports = { uploadFile, getAll, create };

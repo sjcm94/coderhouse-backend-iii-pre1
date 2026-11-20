@@ -11,4 +11,12 @@ function getById(id) {
   return Delivery.findById(id).select(fields).lean();
 }
 
-module.exports = { getAll, getById };
+function addFile(id, metadata) {
+  return Delivery.findByIdAndUpdate(
+    id,
+    { $push: { proofs: metadata } },
+    { new: true, runValidators: true },
+  ).select(fields + ' proofs').lean();
+}
+
+module.exports = { getAll, getById, addFile };

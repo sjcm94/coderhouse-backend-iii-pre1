@@ -1,6 +1,7 @@
 const errors = require('../../errors/dictionary');
-const { ORDER_STATUS, DELIVERY_STATUS } = require('../../constants');
+const { ORDER_STATUS, DELIVERY_STATUS, DOCUMENT_TYPE } = require('../../constants');
 const { ref, arrayOf, id, values } = require('./schemas');
+const { FILE_FIELD, SUPPORTED_FILES } = require('../upload.config');
 
 function success(description, schema) {
   return { description, content: { 'application/json': { schema } } };
@@ -20,6 +21,27 @@ function errorResponse(description, ...codes) {
 
 function jsonBody(schema) {
   return { required: true, content: { 'application/json': { schema: ref(schema) } } };
+}
+
+function uploadBody(properties = {}) {
+  return {
+    required: true,
+    content: {
+      'multipart/form-data': {
+        schema: {
+          type: 'object',
+          required: [FILE_FIELD, ...Object.keys(properties)],
+          properties: {
+            [FILE_FIELD]: { type: 'string', format: 'binary', description: 'PDF, JPEG o PNG de hasta 2 MiB.' },
+            ...properties,
+          },
+        },
+        encoding: {
+          [FILE_FIELD]: { contentType: Object.keys(SUPPORTED_FILES).join(', ') },
+        },
+      },
+    },
+  };
 }
 
 function statusParameter(statuses) {
@@ -47,6 +69,12 @@ const bodyErrors = {
   415: errorResponse('Codificación de cuerpo no compatible.', 'UNSUPPORTED_BODY_ENCODING'),
 };
 
+const uploadErrors = {
+  413: errorResponse('El archivo o el cuerpo supera el tamaño permitido.', 'FILE_TOO_LARGE', 'BODY_TOO_LARGE'),
+  415: errorResponse('Tipo de archivo o codificación no permitidos.', 'INVALID_FILE_TYPE', 'UNSUPPORTED_BODY_ENCODING'),
+  500: errorResponse('Fallo al guardar y asociar el archivo o error inesperado.', 'FILE_SAVE_FAILED', 'INTERNAL_ERROR'),
+};
+
 module.exports = {
   '/api/users': {
     get: {
@@ -68,6 +96,26 @@ module.exports = {
         409: errorResponse('El correo ya está registrado.', 'EMAIL_ALREADY_EXISTS'),
         ...bodyErrors,
         500: internalError,
+      },
+    },
+  },
+  '/api/users/{id}/documents': {
+    post: {
+      tags: ['Users'],
+      summary: 'Subir un documento de usuario',
+      description: 'Guarda un PDF, JPEG o PNG y agrega sus metadatos al usuario.',
+      parameters: idParameter,
+      requestBody: uploadBody({
+        documentType: { type: 'string', enum: [DOCUMENT_TYPE.IDENTITY, DOCUMENT_TYPE.LICENSE] },
+      }),
+      responses: {
+        201: success('Usuario actualizado con los documentos asociados.', ref('UserDocumentResponse')),
+        400: errorResponse(
+          'ID, archivo o formulario inválido.',
+          'INVALID_ID', 'FILE_REQUIRED', 'INVALID_FILE_FIELD', 'INVALID_MULTIPART', 'INVALID_DOCUMENT_TYPE', 'INVALID_JSON',
+        ),
+        404: errorResponse('Usuario inexistente.', 'USER_NOT_FOUND'),
+        ...uploadErrors,
       },
     },
   },
@@ -156,6 +204,24 @@ module.exports = {
         400: invalidId,
         404: errorResponse('Entrega inexistente.', 'DELIVERY_NOT_FOUND'),
         500: internalError,
+      },
+    },
+  },
+  '/api/deliveries/{id}/proofs': {
+    post: {
+      tags: ['Deliveries'],
+      summary: 'Subir un comprobante de entrega',
+      description: 'Guarda el archivo y asocia sus metadatos con el tipo DELIVERY_PROOF.',
+      parameters: idParameter,
+      requestBody: uploadBody(),
+      responses: {
+        201: success('Entrega actualizada con los comprobantes asociados.', ref('DeliveryProofResponse')),
+        400: errorResponse(
+          'ID, archivo o formulario inválido.',
+          'INVALID_ID', 'FILE_REQUIRED', 'INVALID_FILE_FIELD', 'INVALID_MULTIPART', 'INVALID_JSON',
+        ),
+        404: errorResponse('Entrega inexistente.', 'DELIVERY_NOT_FOUND'),
+        ...uploadErrors,
       },
     },
   },

@@ -1,5 +1,5 @@
 const {
-  USER_ROLES, PRODUCT_STATUS, ORDER_STATUS, ORDER_PRIORITY, DELIVERY_STATUS,
+  USER_ROLES, PRODUCT_STATUS, ORDER_STATUS, ORDER_PRIORITY, DELIVERY_STATUS, DOCUMENT_TYPE,
 } = require('../../constants');
 
 const text = { type: 'string' };
@@ -69,6 +69,43 @@ const schemas = {
       orderId: id,
       driverId: { ...id, nullable: true },
       status: values(DELIVERY_STATUS),
+    },
+  },
+  FileMetadata: {
+    type: 'object',
+    required: ['originalName', 'filename', 'path', 'mimeType', 'size', 'documentType', 'uploadedAt'],
+    properties: {
+      originalName: { type: 'string', example: 'comprobante.pdf' },
+      filename: { type: 'string', example: '019756e5-ddd8-4695-a98d-908277e4acd5.pdf' },
+      path: { type: 'string', example: 'uploads/delivery-proofs/019756e5-ddd8-4695-a98d-908277e4acd5.pdf' },
+      mimeType: { type: 'string', enum: ['application/pdf', 'image/jpeg', 'image/png'] },
+      size: { type: 'integer', minimum: 1, maximum: 2097152 },
+      documentType: values(DOCUMENT_TYPE),
+      uploadedAt: { type: 'string', format: 'date-time' },
+    },
+  },
+  UserDocumentResponse: {
+    type: 'object',
+    required: ['user'],
+    properties: {
+      user: {
+        allOf: [
+          ref('User'),
+          { type: 'object', required: ['documents'], properties: { documents: arrayOf('FileMetadata') } },
+        ],
+      },
+    },
+  },
+  DeliveryProofResponse: {
+    type: 'object',
+    required: ['delivery'],
+    properties: {
+      delivery: {
+        allOf: [
+          ref('Delivery'),
+          { type: 'object', required: ['proofs'], properties: { proofs: arrayOf('FileMetadata') } },
+        ],
+      },
     },
   },
   ErrorResponse: {

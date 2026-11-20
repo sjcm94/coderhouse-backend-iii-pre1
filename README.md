@@ -161,3 +161,22 @@ La suite usa **Mocha** para ejecutar las pruebas, **Chai** para validar los cuer
 Se prueban los listados de usuarios y productos, la creación y consulta de pedidos, las entregas, los filtros de estado, la generación y carga de mocks, el endpoint de logger, Swagger y el formato común de errores. Los casos negativos validan el código HTTP, el código interno y el mensaje.
 
 La creación se prueba con `POST /api/orders`. El body incluye `userId` de un cliente existente e `items` con nombre y cantidad de cada artículo. El pedido se crea en `PENDING` y admite `priority` opcional. El filtro por estado se prueba en los listados. Swagger incluye el contrato del POST y sus errores.
+
+## Módulo 7 | Carga de archivos, documentos y comprobantes
+
+La API recibe un archivo en el campo `file` como `multipart/form-data`. Acepta PDF, JPEG y PNG de hasta 2 MiB. Multer valida el campo, el tamaño y el tipo declarado, y el servicio comprueba la firma inicial del archivo.
+
+| Endpoint | Campos del formulario | Carpeta |
+| --- | --- | --- |
+| `POST /api/users/{id}/documents` | `file` y `documentType` con valor `IDENTITY` o `LICENSE`. | `uploads/user-documents/` o `uploads/licenses/` |
+| `POST /api/deliveries/{id}/proofs` | `file`. La API asigna el tipo `DELIVERY_PROOF`. | `uploads/delivery-proofs/` |
+
+### Cómo probar las cargas
+
+1. Inicia la API y abre `http://localhost:3000/api/docs/`. Para un documento, crea un usuario en **Users** y copia su `_id`. Para un comprobante, carga un lote en **Mocks** con `qty=1` y `collection=all`, lista las entregas y copia el `_id` de una.
+2. En la operación de carga en Swagger, pulsa **Try it out**, completa el ID y elige un archivo de prueba. Para un documento, elige también `IDENTITY` o `LICENSE`. En Postman, usa **Body → form-data** y marca `file` como tipo **File**.
+3. El HTTP 201 devuelve el usuario con `documents` o la entrega con `proofs`. Cada registro contiene el nombre original y generado, la ruta relativa, el MIME, el tamaño en bytes, el tipo de documento y la fecha de carga. MongoDB guarda esos metadatos. El contenido del archivo queda en disco.
+
+Los errores usan `{ error: { code, message } }`. Prueba sin archivo o con un campo incorrecto para obtener 400, con un ID inexistente para obtener 404, con un archivo demasiado grande para obtener 413 o con un tipo de archivo no permitido para obtener 415. El logger registra las asociaciones exitosas y los errores de carga.
+
+La carpeta `uploads/` se crea al guardar el primer archivo y queda fuera de Git. Si necesitas otro directorio en tu entorno, define el valor opcional `UPLOADS_DIR` en `.env`. `npm test` ejecuta los casos de carga en una carpeta temporal que se limpia durante la suite.

@@ -24,4 +24,12 @@ async function create(data) {
   }
 }
 
-module.exports = { getAll, getById, create };
+function addFile(id, metadata) {
+  return User.findByIdAndUpdate(
+    id,
+    { $push: { documents: metadata } },
+    { new: true, runValidators: true },
+  ).select(fields + ' documents').lean();
+}
+
+module.exports = { getAll, getById, addFile, create };

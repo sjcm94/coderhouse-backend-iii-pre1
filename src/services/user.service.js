@@ -1,6 +1,8 @@
 const AppError = require('../errors/app.error');
 const userRepository = require('../repositories/user.repository');
-const { USER_ROLES } = require('../utils/constants');
+const { validateId } = require('./shipment-validation');
+const { validateFile, associateFile } = require('./upload.service');
+const { USER_ROLES, DOCUMENT_TYPE } = require('../utils/constants');
 
 function getAll() {
   return userRepository.getAll();
@@ -28,4 +30,22 @@ async function create(data = {}) {
   return user;
 }
 
-module.exports = { getAll, create };
+async function uploadFile(id, file, documentType) {
+  validateId(id);
+  validateFile(file);
+  if (documentType !== DOCUMENT_TYPE.IDENTITY && documentType !== DOCUMENT_TYPE.LICENSE) {
+    throw new AppError('INVALID_DOCUMENT_TYPE');
+  }
+
+  const user = await userRepository.getById(id);
+  if (!user) throw new AppError('USER_NOT_FOUND');
+
+  return associateFile({
+    file,
+    documentType,
+    persist: (metadata) => userRepository.addFile(id, metadata),
+    notFoundCode: 'USER_NOT_FOUND',
+  });
+}
+
+module.exports = { getAll, create, uploadFile };

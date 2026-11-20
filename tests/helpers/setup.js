@@ -1,5 +1,6 @@
+const { rm } = require('node:fs/promises');
 const { loadTestEnvironment } = require('../../src/config/test.config');
-const { mongoUri, dbName } = loadTestEnvironment();
+const { mongoUri, dbName, uploadsDir } = loadTestEnvironment();
 
 const mongoose = require('mongoose');
 const database = require('../../src/repositories/database');
@@ -23,6 +24,7 @@ exports.mochaHooks = {
       Order.deleteMany({}),
       Product.deleteMany({}),
       User.deleteMany({}),
+      rm(uploadsDir, { recursive: true, force: true }),
     ]);
   },
 
@@ -32,7 +34,11 @@ exports.mochaHooks = {
         await mongoose.connection.dropDatabase();
       }
     } finally {
-      await database.disconnect();
+      try {
+        await database.disconnect();
+      } finally {
+        await rm(uploadsDir, { recursive: true, force: true });
+      }
     }
   },
 };

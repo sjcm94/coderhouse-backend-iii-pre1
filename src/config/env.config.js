@@ -1,3 +1,4 @@
+const path = require('node:path');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -27,7 +28,10 @@ if (!['development', 'test', 'production'].includes(nodeEnv)) {
   throw new Error('NODE_ENV debe ser development, test o production.');
 }
 
+const uploadsDir = path.resolve(process.env.UPLOADS_DIR?.trim() || path.join(__dirname, '../../uploads'));
+
 module.exports = Object.freeze({
+  uploadsDir,
   port,
   mongoUri,
   nodeEnv,

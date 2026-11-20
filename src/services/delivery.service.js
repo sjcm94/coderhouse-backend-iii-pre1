@@ -1,7 +1,8 @@
 const deliveryRepository = require('../repositories/delivery.repository');
 const AppError = require('../errors/app.error');
-const { DELIVERY_STATUS } = require('../constants');
+const { DELIVERY_STATUS, DOCUMENT_TYPE } = require('../constants');
 const { validateId, validateStatus } = require('./shipment-validation');
+const { validateFile, associateFile } = require('./upload.service');
 
 function getAll(status) {
   validateStatus(status, DELIVERY_STATUS);
@@ -16,4 +17,17 @@ async function getById(id) {
   return delivery;
 }
 
-module.exports = { getAll, getById };
+async function uploadFile(id, file) {
+  validateId(id);
+  validateFile(file);
+  await getById(id);
+
+  return associateFile({
+    file,
+    documentType: DOCUMENT_TYPE.DELIVERY_PROOF,
+    persist: (metadata) => deliveryRepository.addFile(id, metadata),
+    notFoundCode: 'DELIVERY_NOT_FOUND',
+  });
+}
+
+module.exports = { getAll, getById, uploadFile };
