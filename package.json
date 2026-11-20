@@ -1,0 +1,18 @@
+{
+  "name": "shipnow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API inicial de productos y usuarios de ShipNow",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "mongoose": "^8.19.1"
+  }
+}
