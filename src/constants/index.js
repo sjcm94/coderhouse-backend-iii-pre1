@@ -6,6 +6,24 @@ const PRODUCT_STATUS = Object.freeze({
 const USER_ROLES = Object.freeze({
   ADMIN: 'ADMIN',
   USER: 'USER',
+  DRIVER: 'DRIVER',
 });
 
-module.exports = { PRODUCT_STATUS, USER_ROLES };
+const ORDER_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  IN_TRANSIT: 'IN_TRANSIT',
+  DELIVERED: 'DELIVERED',
+});
+
+const ORDER_PRIORITY = Object.freeze({
+  NORMAL: 'NORMAL',
+  HIGH: 'HIGH',
+});
+
+const DELIVERY_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  IN_TRANSIT: 'IN_TRANSIT',
+  DELIVERED: 'DELIVERED',
+});
+
+module.exports = { PRODUCT_STATUS, USER_ROLES, ORDER_STATUS, ORDER_PRIORITY, DELIVERY_STATUS };
