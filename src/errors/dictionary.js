@@ -6,6 +6,8 @@ module.exports = Object.freeze({
   INVALID_EMAIL: { status: 400, message: 'El correo electrónico no es válido.' },
   EMAIL_ALREADY_EXISTS: { status: 409, message: 'El correo electrónico ya está registrado.' },
   USER_NOT_FOUND: { status: 404, message: 'El usuario no existe.' },
+  INVALID_ID: { status: 400, message: 'El ID debe tener 24 caracteres hexadecimales.' },
+  DELIVERY_NOT_FOUND: { status: 404, message: 'La entrega no existe.' },
   ORDER_NOT_FOUND: { status: 404, message: 'El pedido no existe.' },
   INVALID_STATUS: { status: 400, message: 'El estado indicado no está permitido.' },
   INVALID_MOCK_QUANTITY: { status: 400, message: 'qty debe ser un número entero entre 1 y 100.' },

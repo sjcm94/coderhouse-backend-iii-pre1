@@ -1,0 +1,121 @@
+const {
+  USER_ROLES, PRODUCT_STATUS, ORDER_STATUS, ORDER_PRIORITY, DELIVERY_STATUS,
+} = require('../../constants');
+
+const text = { type: 'string' };
+const email = { type: 'string', format: 'email', example: 'ana@example.com' };
+const id = { type: 'string', pattern: '^[a-fA-F0-9]{24}$', example: '507f1f77bcf86cd799439011' };
+const values = (options) => ({ type: 'string', enum: Object.values(options) });
+const ref = (name) => ({ $ref: `#/components/schemas/${name}` });
+const arrayOf = (name) => ({ type: 'array', items: ref(name) });
+const name = { type: 'string', minLength: 1, example: 'Ana Pérez' };
+const price = { type: 'number', minimum: 0, example: 12.5 };
+const stock = { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER, example: 3 };
+
+const schemas = {
+  User: {
+    type: 'object',
+    required: ['_id', 'name', 'email', 'role'],
+    properties: { _id: id, name, email, role: values(USER_ROLES) },
+  },
+  NewUser: {
+    type: 'object',
+    required: ['name', 'email'],
+    properties: { name, email },
+  },
+  Product: {
+    type: 'object',
+    required: ['_id', 'name', 'price', 'stock', 'status'],
+    properties: { _id: id, name, price, stock, status: values(PRODUCT_STATUS) },
+  },
+  NewProduct: {
+    type: 'object',
+    required: ['name', 'price', 'stock'],
+    properties: { name: { ...name, example: 'Caja mediana' }, price, stock },
+  },
+  OrderItem: {
+    type: 'object',
+    required: ['name', 'quantity'],
+    properties: {
+      name: { ...name, example: 'Caja de prueba' },
+      quantity: { type: 'integer', minimum: 1, maximum: Number.MAX_SAFE_INTEGER, example: 1 },
+    },
+  },
+  Order: {
+    type: 'object',
+    required: ['_id', 'userId', 'status', 'priority'],
+    properties: {
+      _id: id,
+      userId: id,
+      status: values(ORDER_STATUS),
+      priority: values(ORDER_PRIORITY),
+      items: arrayOf('OrderItem'),
+    },
+  },
+  Delivery: {
+    type: 'object',
+    required: ['_id', 'orderId', 'status'],
+    properties: {
+      _id: id,
+      orderId: id,
+      driverId: { ...id, nullable: true },
+      status: values(DELIVERY_STATUS),
+    },
+  },
+  ErrorResponse: {
+    type: 'object',
+    required: ['error'],
+    properties: {
+      error: {
+        type: 'object',
+        required: ['code', 'message'],
+        properties: { code: text, message: text },
+      },
+    },
+  },
+  SuccessResponse: {
+    type: 'object',
+    required: ['message'],
+    properties: { message: text },
+  },
+  MockUser: {
+    type: 'object',
+    required: ['nombre', 'email', 'rol'],
+    properties: { nombre: name, email, rol: { type: 'string', enum: ['cliente', 'repartidor'] } },
+  },
+  MockBatch: {
+    type: 'object',
+    required: ['users', 'drivers', 'orders', 'deliveries'],
+    properties: {
+      users: arrayOf('User'),
+      drivers: arrayOf('User'),
+      orders: arrayOf('Order'),
+      deliveries: arrayOf('Delivery'),
+    },
+  },
+  SeedResponse: {
+    type: 'object',
+    required: ['insertados', 'coleccion'],
+    properties: {
+      insertados: { type: 'integer', minimum: 1, example: 10 },
+      coleccion: { type: 'string', enum: ['usuarios', 'todas'], example: 'usuarios' },
+    },
+  },
+  LoggerResponse: {
+    allOf: [
+      ref('SuccessResponse'),
+      {
+        type: 'object',
+        required: ['niveles'],
+        properties: {
+          niveles: {
+            type: 'array',
+            items: { type: 'string', enum: ['debug', 'http', 'info', 'warning', 'error', 'fatal'] },
+          },
+        },
+      },
+    ],
+  },
+};
+
+module.exports = { schemas, ref, arrayOf, id, values };

@@ -76,6 +76,7 @@ function makeBatch(qty) {
     userId: user._id,
     status: statuses[index % statuses.length],
     priority: priorities[index % priorities.length],
+    items: [{ name: 'Caja de prueba', quantity: 1 }],
   }));
 
   const deliveries = orders.map((order, index) => ({

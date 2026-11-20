@@ -129,3 +129,18 @@ En `development` y `test`, la consola muestra los seis niveles. En `production` 
 4. Abre `http://localhost:3000/api/mocks/users?qty=-1`. Recibirás el HTTP 400 del Módulo 3 y verás un `[warning]` en la terminal.
 
 La ruta de prueba está habilitada en `development` y `test`. En producción devuelve HTTP 404.
+
+## Módulo 5 | Documentación de API con Swagger
+
+Levanta el servidor con `npm ci`, tu archivo `.env` y `npm start`, como se explica en el Módulo 1. Abre **http://localhost:3000/api/docs/** con el puerto de tu configuración. El documento OpenAPI está disponible en `/api/docs/openapi.json`.
+
+Swagger agrupa los endpoints en **Users, Orders, Deliveries, Mocks, Logger y Products**. En cada operación, usa **Try it out** y luego **Execute** para enviar una solicitud y revisar el código HTTP y la respuesta. Selecciona el servidor actual si usas un puerto distinto del ejemplo.
+
+### Probar pedidos, entregas y errores
+
+1. En **Mocks**, ejecuta `POST /api/mocks/seed` con `qty=3` y `collection=all`. Deja el body vacío. La carga está habilitada en desarrollo y pruebas.
+2. En **Orders** o **Deliveries**, ejecuta el listado y copia un `_id` para probar la consulta por ID. Puedes filtrar ambos listados con `status`. Los pedidos generados incluyen un item de ejemplo.
+3. Para ver `INVALID_STATUS` (400), prueba `GET /api/orders?status=invalido` o `GET /api/deliveries?status=invalido` en el navegador. Swagger ofrece solo estados válidos en el selector.
+4. Para ver `INVALID_MOCK_QUANTITY` (400), prueba `GET /api/mocks/users?qty=-1`. Para los seis niveles de logs, ejecuta `GET /api/logger/test` en `development` o `test`.
+
+Los GET de Mocks generan vistas previas. Para consultar pedidos y entregas en MongoDB, usa los IDs que aparecen en los listados después de la carga.
