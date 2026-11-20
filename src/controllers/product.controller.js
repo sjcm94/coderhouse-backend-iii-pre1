@@ -8,10 +8,6 @@ async function getAll(req, res) {
 async function create(req, res) {
   const product = await productService.create(req.body);
 
-  if (product.error) {
-    return res.status(400).json({ error: product.error });
-  }
-
   res.status(201).json(product);
 }
 

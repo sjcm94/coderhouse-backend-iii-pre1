@@ -1,8 +1,10 @@
-# ShipNow · Pre-entrega del Módulo 2
+# ShipNow Pruebas
 
-API de productos y usuarios hecha con Node.js, Express y MongoDB. Incluye un módulo para generar y cargar datos de prueba.
+## Módulo 1 · Estructura profesional de ShipNow
 
-## Correr el proyecto localmente
+API de productos y usuarios hecha con Node.js, Express y MongoDB.
+
+### Correr el proyecto localmente
 
 1. Instala Node.js 20 o superior y ten una instancia de MongoDB en ejecución.
 2. Abre una terminal en la carpeta del proyecto y ejecuta `npm ci`.
@@ -18,7 +20,7 @@ API de productos y usuarios hecha con Node.js, Express y MongoDB. Incluye un mó
 
 La app valida las tres variables al arrancar. Si quieres comprobarlo, borra temporalmente `MONGODB_URI` de tu `.env` y ejecuta `npm start`. Aparecerá un mensaje indicando qué variable falta y el servidor HTTP no se iniciará.
 
-## Endpoints
+### Endpoints
 
 | Método | Ruta | Resultado |
 | --- | --- | --- |
@@ -34,13 +36,17 @@ Para enviar un POST, selecciona JSON como tipo de contenido (`Content-Type: appl
 
 Los datos inválidos devuelven 400. Un correo duplicado devuelve 409. Un producto con stock cero se guarda con estado `OUT_OF_STOCK` y queda fuera del listado.
 
-## Por qué separé las capas
+### Por qué separé las capas
 
 El Router conecta cada ruta con su Controller. El Controller lee la petición, llama al Service y envía la respuesta con su código HTTP.
 
 En el Service dejé las reglas del negocio. Por ejemplo, ahí decido el estado del producto a partir del stock, filtro el listado y asigno el rol inicial a los usuarios. En el Repository dejé las consultas de Mongoose, el orden y los campos que se devuelven. Así puedo cambiar la consulta sin tocar la regla de stock. Los modelos solo definen los esquemas.
 
-## Probar los mocks
+## Módulo 2 · Mocking y carga de datos de prueba
+
+Este módulo permite generar y cargar datos de prueba.
+
+### Probar los mocks
 
 Con el servidor encendido, puedes abrir los GET en el navegador. Para el POST, usa Postman o envía el método POST desde la terminal. Usa una base de prueba, como `shipnow_pruebas` en el ejemplo de configuración.
 
@@ -66,3 +72,36 @@ La respuesta es:
 En PowerShell puedes usar `curl.exe` en el mismo comando. Si omites `qty`, se usa 10. Solo se aceptan enteros de 1 a 100. El POST permite `collection=users` (por defecto) y `collection=all`. Los parámetros inválidos devuelven 400 y en producción la carga devuelve 403.
 
 Los repartidores se guardan en `users` con el rol `DRIVER` y los clientes con `USER`. Cada pedido apunta a un cliente por `userId`. Cada entrega apunta a un pedido por `orderId` y, cuando se asigna, a un repartidor por `driverId`. El Service genera los datos y sus relaciones usando las constantes del proyecto. El Repository guarda el lote en MongoDB.
+
+## Módulo 3 · Manejo profesional de errores
+
+Los servicios lanzan un `AppError` cuando detectan un caso como un correo duplicado o una cantidad de mocks inválida. El diccionario en `src/errors/dictionary.js` asocia cada código con su mensaje y su estado HTTP. Express 5 envía los errores de controladores síncronos y asíncronos al middleware global en `src/middlewares/error.middleware.js`. El middleware también maneja rutas inexistentes, JSON inválido y errores inesperados.
+
+El cuerpo de error siempre tiene el objeto `error` con `code` y `message`. Por ejemplo, al llamar a `GET /api/mocks/users?qty=-1`, la API devuelve HTTP 400:
+
+```json
+{
+  "error": {
+    "code": "INVALID_MOCK_QUANTITY",
+    "message": "qty debe ser un número entero entre 1 y 100."
+  }
+}
+```
+
+### Probar los errores
+
+Con el servidor encendido, abre los GET en el navegador o usa Postman para revisar el código HTTP y el JSON. Envía los POST de Productos y Usuarios con `Content-Type: application/json`.
+
+| Prueba | HTTP | Código de error |
+| --- | --- | --- |
+| GET `/api/mocks/users?qty=-1` o `/api/mocks?qty=101` | 400 | `INVALID_MOCK_QUANTITY` |
+| POST `/api/mocks/seed?qty=0` o `/api/mocks/seed?qty=2.5` | 400 | `INVALID_MOCK_QUANTITY` |
+| POST `/api/mocks/seed?qty=2&collection=orders` | 400 | `INVALID_MOCK_COLLECTION` |
+| POST `/api/mocks/seed?qty=2` con el servidor iniciado en `NODE_ENV=production` | 403 | `MOCK_SEED_FORBIDDEN` |
+| POST `/api/users` con un correo inválido | 400 | `INVALID_EMAIL` |
+| POST `/api/users` dos veces con el mismo correo válido | 409 en el segundo POST | `EMAIL_ALREADY_EXISTS` |
+| POST `/api/products` con nombre, precio válido y stock `-1` | 400 | `INVALID_PRODUCT_STOCK` |
+| POST `/api/users` con un cuerpo JSON incompleto, como `{` | 400 | `INVALID_JSON` |
+| GET `/api/ruta-inexistente` | 404 | `ROUTE_NOT_FOUND` |
+
+Si la generación o la escritura de un lote falla durante un POST de mocks, la API responde HTTP 500 con el código `MOCK_SEED_FAILED`. La respuesta pública contiene un mensaje general. El repositorio intenta limpiar los registros del lote si una escritura falla.

@@ -1,4 +1,5 @@
 const { randomBytes, randomInt } = require('node:crypto');
+const AppError = require('../errors/app.error');
 const mockRepository = require('../repositories/mock.repository');
 const { USER_ROLES, ORDER_STATUS, ORDER_PRIORITY, DELIVERY_STATUS } = require('../constants');
 
@@ -19,10 +20,16 @@ const DELIVERY_BY_ORDER = Object.freeze({
 function readQuantity(value) {
   if (value === undefined) return DEFAULT_QTY;
 
-  if (typeof value !== 'string' || !/^\d+$/.test(value)) return null;
+  if (typeof value !== 'string' || !/^\d+$/.test(value)) {
+    throw new AppError('INVALID_MOCK_QUANTITY');
+  }
 
   const qty = Number(value);
-  return qty >= 1 && qty <= MAX_QTY ? qty : null;
+  if (qty < 1 || qty > MAX_QTY) {
+    throw new AppError('INVALID_MOCK_QUANTITY');
+  }
+
+  return qty;
 }
 
 function newId() {
@@ -48,13 +55,13 @@ function makeMixedUsers(qty) {
   });
 }
 
-function previewUsers(qty) {
-  return makeMixedUsers(qty).map(({ name, email, role }) => {
+function previewUsers(value) {
+  return makeMixedUsers(readQuantity(value)).map(({ name, email, role }) => {
     return { nombre: name, email, rol: ROLE_LABELS[role] };
   });
 }
 
-function previewBatch(qty) {
+function makeBatch(qty) {
   const users = Array.from({ length: qty }, () => makeUser(USER_ROLES.USER));
   const drivers = Array.from({ length: qty }, () => makeUser(USER_ROLES.DRIVER));
   const statuses = [ORDER_STATUS.IN_TRANSIT, ORDER_STATUS.DELIVERED, ORDER_STATUS.PENDING];
@@ -77,19 +84,37 @@ function previewBatch(qty) {
   return { users, drivers, orders, deliveries };
 }
 
-async function seed(qty, collection) {
-  if (collection === 'users') {
-    const inserted = await mockRepository.insertBatch({ users: makeMixedUsers(qty) });
-    return { insertados: inserted, coleccion: 'usuarios' };
-  }
-
-  const { users, drivers, orders, deliveries } = previewBatch(qty);
-  const inserted = await mockRepository.insertBatch({
-    users: [...users, ...drivers],
-    orders,
-    deliveries,
-  });
-  return { insertados: inserted, coleccion: 'todas' };
+function previewBatch(value) {
+  return makeBatch(readQuantity(value));
 }
 
-module.exports = { readQuantity, previewUsers, previewBatch, seed };
+async function seed(value, collection = 'users') {
+  const { nodeEnv } = require('../config');
+  if (nodeEnv === 'production') {
+    throw new AppError('MOCK_SEED_FORBIDDEN');
+  }
+
+  const qty = readQuantity(value);
+  if (collection !== 'users' && collection !== 'all') {
+    throw new AppError('INVALID_MOCK_COLLECTION');
+  }
+
+  try {
+    if (collection === 'users') {
+      const inserted = await mockRepository.insertBatch({ users: makeMixedUsers(qty) });
+      return { insertados: inserted, coleccion: 'usuarios' };
+    }
+
+    const { users, drivers, orders, deliveries } = makeBatch(qty);
+    const inserted = await mockRepository.insertBatch({
+      users: [...users, ...drivers],
+      orders,
+      deliveries,
+    });
+    return { insertados: inserted, coleccion: 'todas' };
+  } catch (error) {
+    throw new AppError('MOCK_SEED_FAILED', { cause: error });
+  }
+}
+
+module.exports = { previewUsers, previewBatch, seed };

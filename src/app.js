@@ -2,6 +2,7 @@ const express = require('express');
 const productRoutes = require('./routes/product.routes');
 const userRoutes = require('./routes/user.routes');
 const mockRoutes = require('./routes/mock.routes');
+const { notFound, handleError } = require('./middlewares/error.middleware');
 
 const app = express();
 
@@ -10,12 +11,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/mocks', mockRoutes);
 
-app.use((error, req, res, next) => {
-  if (error.type === 'entity.parse.failed') {
-    return res.status(400).json({ error: 'El cuerpo debe contener JSON válido.' });
-  }
-
-  res.status(500).json({ error: 'Ocurrió un error interno.' });
-});
+app.use(notFound);
+app.use(handleError);
 
 module.exports = app;

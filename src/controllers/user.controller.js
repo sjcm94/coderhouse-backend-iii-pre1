@@ -8,10 +8,6 @@ async function getAll(req, res) {
 async function create(req, res) {
   const user = await userService.create(req.body);
 
-  if (user.error) {
-    return res.status(user.duplicate ? 409 : 400).json({ error: user.error });
-  }
-
   res.status(201).json(user);
 }
 
