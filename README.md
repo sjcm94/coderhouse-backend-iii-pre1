@@ -180,3 +180,68 @@ La API recibe un archivo en el campo `file` como `multipart/form-data`. Acepta P
 Los errores usan `{ error: { code, message } }`. Prueba sin archivo o con un campo incorrecto para obtener 400, con un ID inexistente para obtener 404, con un archivo demasiado grande para obtener 413 o con un tipo de archivo no permitido para obtener 415. El logger registra las asociaciones exitosas y los errores de carga.
 
 La carpeta `uploads/` se crea al guardar el primer archivo y queda fuera de Git. Si necesitas otro directorio en tu entorno, define el valor opcional `UPLOADS_DIR` en `.env`. `npm test` ejecuta los casos de carga en una carpeta temporal que se limpia durante la suite.
+
+## Módulo 8 | Performance, escalabilidad y Docker
+
+Los listados de usuarios, productos, pedidos y entregas aceptan `page` (1 a 1000) y `limit` (1 a 100). Por defecto devuelven la primera página con hasta 20 registros y mantienen el formato de lista. Por ejemplo, `GET /api/orders?page=2&limit=10&status=PENDING` aplica el filtro y la paginación en MongoDB. Un parámetro inválido devuelve 400 con `INVALID_PAGINATION`.
+
+Los listados usan proyecciones e índices. El catálogo filtra el stock en MongoDB. Las cargas mantienen un máximo de 2 MiB por archivo y se validan antes de escribir a disco. Los adjuntos se conservan mientras estén asociados a su entidad. Si dejas de necesitarlos, revisa conjuntamente el archivo y sus metadatos antes de retirarlos.
+
+### Variables y ejecución local
+
+Copia `.env.example` a `.env`, configura las variables y ejecuta `npm ci` y `npm start`. Para ejecutar la suite, usa `npm test` con el entorno y MongoDB de pruebas del Módulo 6.
+
+| Variable | Uso |
+| --- | --- |
+| `PORT` | Puerto HTTP obligatorio. El ejemplo usa `3000`. |
+| `MONGODB_URI` | URI obligatoria de MongoDB. Usa una base distinta por entorno. |
+| `NODE_ENV` | Obligatoria. Acepta `development`, `test` o `production`. |
+| `LOG_LEVEL` | Umbral opcional de consola. Por defecto `debug` en desarrollo y pruebas e `info` en producción. El archivo conserva solo `error` y `fatal`. |
+| `SWAGGER_ENABLED` | Opcional. Acepta `true` o `false`. |
+| `UPLOADS_DIR` | Ruta opcional de almacenamiento. Por defecto usa la carpeta `uploads/` del proyecto. |
+| `TEST_MONGODB_URI` | URI de la instancia para `npm test`, configurada en `.env.test` o en la terminal. |
+
+MongoDB es el único servicio externo de esta versión. La API del proyecto aún funciona sin JWT. Si falta una variable obligatoria o su valor es inválido, ShipNow interrumpe el arranque con un mensaje de error.
+
+### Health check y rutas internas
+
+- `GET /api/health` informa el estado del proceso, el entorno, el uptime en segundos y la fecha. Es una comprobación de que la API responde y no consulta MongoDB.
+- En `development` y `test` están disponibles las rutas de mocks y la prueba de logger. En `production`, los GET de mocks y `/api/logger/test` devuelven 404, y la carga `POST /api/mocks/seed` devuelve 403.
+- Swagger está en `/api/docs/`, con su JSON en `/api/docs/openapi.json`. Por defecto se habilita en desarrollo y pruebas. En producción devuelve 404 salvo que actives `SWAGGER_ENABLED=true` para una revisión controlada.
+
+### Construir y ejecutar con Docker
+
+Desde la raíz del repo, construye la imagen:
+
+```bash
+docker build -t shipnow-api .
+```
+
+Para una prueba con MongoDB en otro contenedor, crea una red y levanta una base de prueba en esa red. Su puerto queda dentro de Docker.
+
+```bash
+docker network create shipnow-net
+docker run -d --name shipnow-mongo --network shipnow-net -v shipnow-mongo-data:/data/db mongo:7
+```
+
+Cuando MongoDB esté listo, crea un archivo local `.env.docker` para esta prueba:
+
+```dotenv
+PORT=3000
+MONGODB_URI=mongodb://shipnow-mongo:27017/shipnow_pruebas
+NODE_ENV=production
+LOG_LEVEL=info
+SWAGGER_ENABLED=true
+```
+
+Ejecuta la API con ese archivo. El puerto se publica en tu equipo, y los volúmenes conservan los logs y adjuntos al reemplazar el contenedor:
+
+```bash
+docker run --rm --name shipnow-api --network shipnow-net --env-file .env.docker -p 127.0.0.1:3000:3000 -v shipnow-logs:/app/logs -v shipnow-uploads:/app/uploads shipnow-api
+```
+
+Abre `http://localhost:3000/api/health`, `http://localhost:3000/api/users` y `http://localhost:3000/api/docs/` para comprobar el contenedor. Si cambias `PORT`, ajusta el puerto interno de `-p`. Con una instancia de MongoDB accesible desde Docker, usa su URI en `.env.docker` y omite el contenedor de MongoDB del ejemplo.
+
+La imagen instala las dependencias de ejecución desde el lockfile y ejecuta `src/server.js`, el mismo punto de entrada de `npm start`. Docker ejecuta el proceso como usuario `node` y usa `/api/health` para la comprobación de salud. Consulta la consola con `docker logs shipnow-api`. Los logs de error rotan en `/app/logs`; los adjuntos quedan en `/app/uploads`.
+
+El repo excluye `node_modules/`, archivos de entorno reales, `logs/`, `uploads/` y `coverage/`. `.dockerignore` también excluye estos archivos del contexto de construcción, junto con `.git`, tests y archivos temporales.
