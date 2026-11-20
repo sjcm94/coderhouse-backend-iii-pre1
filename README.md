@@ -1,6 +1,6 @@
 # ShipNow Pruebas
 
-## Módulo 1 · Estructura profesional de ShipNow
+## Módulo 1 | Estructura profesional de ShipNow
 
 API de productos y usuarios hecha con Node.js, Express y MongoDB.
 
@@ -42,7 +42,7 @@ El Router conecta cada ruta con su Controller. El Controller lee la petición, l
 
 En el Service dejé las reglas del negocio. Por ejemplo, ahí decido el estado del producto a partir del stock, filtro el listado y asigno el rol inicial a los usuarios. En el Repository dejé las consultas de Mongoose, el orden y los campos que se devuelven. Así puedo cambiar la consulta sin tocar la regla de stock. Los modelos solo definen los esquemas.
 
-## Módulo 2 · Mocking y carga de datos de prueba
+## Módulo 2 | Mocking y carga de datos de prueba
 
 Este módulo permite generar y cargar datos de prueba.
 
@@ -73,7 +73,7 @@ En PowerShell puedes usar `curl.exe` en el mismo comando. Si omites `qty`, se us
 
 Los repartidores se guardan en `users` con el rol `DRIVER` y los clientes con `USER`. Cada pedido apunta a un cliente por `userId`. Cada entrega apunta a un pedido por `orderId` y, cuando se asigna, a un repartidor por `driverId`. El Service genera los datos y sus relaciones usando las constantes del proyecto. El Repository guarda el lote en MongoDB.
 
-## Módulo 3 · Manejo profesional de errores
+## Módulo 3 | Manejo profesional de errores
 
 Los servicios lanzan un `AppError` cuando detectan un caso como un correo duplicado o una cantidad de mocks inválida. El diccionario en `src/errors/dictionary.js` asocia cada código con su mensaje y su estado HTTP. Express 5 envía los errores de controladores síncronos y asíncronos al middleware global en `src/middlewares/error.middleware.js`. El middleware también maneja rutas inexistentes, JSON inválido y errores inesperados.
 
@@ -105,3 +105,27 @@ Con el servidor encendido, abre los GET en el navegador o usa Postman para revis
 | GET `/api/ruta-inexistente` | 404 | `ROUTE_NOT_FOUND` |
 
 Si la generación o la escritura de un lote falla durante un POST de mocks, la API responde HTTP 500 con el código `MOCK_SEED_FAILED`. La respuesta pública contiene un mensaje general. El repositorio intenta limpiar los registros del lote si una escritura falla.
+
+## Módulo 4 | Logging y monitoreo básico
+
+ShipNow usa Winston. La configuración está en `src/config/logger.js`. Cada línea incluye fecha, hora, nivel y mensaje. Los logs registran el arranque, la conexión a MongoDB, las solicitudes HTTP, la generación y carga de mocks y los errores capturados por el middleware del Módulo 3.
+
+| Nivel | Uso |
+| --- | --- |
+| `debug` | Diagnóstico en desarrollo. |
+| `http` | Método, ruta, estado HTTP y duración de la solicitud. |
+| `info` | Arranque, conexión y operaciones exitosas. |
+| `warning` | Errores esperados, como una cantidad de mocks inválida o una ruta inexistente. |
+| `error` | Fallas de servidor, como un error al guardar un lote en MongoDB. |
+| `fatal` | Fallas que impiden el arranque. |
+
+En `development` y `test`, la consola muestra los seis niveles. En `production` muestra `info`, `warning`, `error` y `fatal`. En los tres entornos, `logs/error.log` guarda solo `error` y `fatal`. Winston rota el archivo por tamaño, cerca de 1 MiB, y conserva hasta tres archivos en total, incluido el actual. `.gitignore` excluye toda la carpeta `logs/`.
+
+### Probar el logger
+
+1. Configura `NODE_ENV=development` en `.env` y ejecuta `npm start`.
+2. Abre `http://localhost:3000/api/logger/test` o envía un GET desde Postman. La API responde 200 y la terminal muestra un mensaje de prueba por cada nivel. La prueba de nivel `fatal` registra un mensaje y el servidor sigue atendiendo solicitudes.
+3. Abre `logs/error.log`. De esa prueba solo deben aparecer las líneas `[error]` y `[fatal]`.
+4. Abre `http://localhost:3000/api/mocks/users?qty=-1`. Recibirás el HTTP 400 del Módulo 3 y verás un `[warning]` en la terminal.
+
+La ruta de prueba está habilitada en `development` y `test`. En producción devuelve HTTP 404.

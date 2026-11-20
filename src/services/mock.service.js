@@ -1,5 +1,6 @@
 const { randomBytes, randomInt } = require('node:crypto');
 const AppError = require('../errors/app.error');
+const { logger } = require('../config/logger');
 const mockRepository = require('../repositories/mock.repository');
 const { USER_ROLES, ORDER_STATUS, ORDER_PRIORITY, DELIVERY_STATUS } = require('../constants');
 
@@ -56,7 +57,10 @@ function makeMixedUsers(qty) {
 }
 
 function previewUsers(value) {
-  return makeMixedUsers(readQuantity(value)).map(({ name, email, role }) => {
+  const qty = readQuantity(value);
+  const users = makeMixedUsers(qty);
+  logger.info('Usuarios mock generados', { cantidad: qty });
+  return users.map(({ name, email, role }) => {
     return { nombre: name, email, rol: ROLE_LABELS[role] };
   });
 }
@@ -85,7 +89,10 @@ function makeBatch(qty) {
 }
 
 function previewBatch(value) {
-  return makeBatch(readQuantity(value));
+  const qty = readQuantity(value);
+  const batch = makeBatch(qty);
+  logger.info('Lote mock generado', { cantidadPorTipo: qty });
+  return batch;
 }
 
 async function seed(value, collection = 'users') {
@@ -102,6 +109,7 @@ async function seed(value, collection = 'users') {
   try {
     if (collection === 'users') {
       const inserted = await mockRepository.insertBatch({ users: makeMixedUsers(qty) });
+      logger.info('Usuarios mock guardados en MongoDB', { cantidad: inserted });
       return { insertados: inserted, coleccion: 'usuarios' };
     }
 
@@ -110,6 +118,10 @@ async function seed(value, collection = 'users') {
       users: [...users, ...drivers],
       orders,
       deliveries,
+    });
+    logger.info('Lote mock guardado en MongoDB', {
+      registros: inserted,
+      pedidosCreados: orders.length,
     });
     return { insertados: inserted, coleccion: 'todas' };
   } catch (error) {
