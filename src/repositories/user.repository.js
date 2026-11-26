@@ -2,8 +2,13 @@ const User = require('../models/user.model');
 
 const fields = '_id name email role';
 
-function getAll() {
-  return User.find().select(fields).sort({ name: 1, _id: 1 }).lean();
+function getAll({ skip, limit }) {
+  return User.find()
+    .select(fields)
+    .sort({ name: 1, _id: 1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 }
 
 function getById(id) {

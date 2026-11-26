@@ -1,7 +1,7 @@
 const deliveryService = require('../services/delivery.service');
 
 async function getAll(req, res) {
-  res.status(200).json(await deliveryService.getAll(req.query.status));
+  res.status(200).json(await deliveryService.getAll(req.query));
 }
 
 async function getById(req, res) {

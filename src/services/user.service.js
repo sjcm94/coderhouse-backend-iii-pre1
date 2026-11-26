@@ -1,11 +1,12 @@
+const { pagination } = require('./pagination');
 const AppError = require('../errors/app.error');
 const userRepository = require('../repositories/user.repository');
 const { validateId } = require('./shipment-validation');
 const { validateFile, associateFile } = require('./upload.service');
 const { USER_ROLES, DOCUMENT_TYPE } = require('../utils/constants');
 
-function getAll() {
-  return userRepository.getAll();
+function getAll(query) {
+  return userRepository.getAll(pagination(query));
 }
 
 async function create(data = {}) {

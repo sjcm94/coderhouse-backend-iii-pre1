@@ -108,6 +108,16 @@ const schemas = {
       },
     },
   },
+  HealthResponse: {
+    type: 'object',
+    required: ['status', 'environment', 'uptime', 'timestamp'],
+    properties: {
+      status: { type: 'string', enum: ['ok'] },
+      environment: { type: 'string', enum: ['development', 'test', 'production'] },
+      uptime: { type: 'integer', minimum: 0, description: 'Segundos de actividad del proceso.' },
+      timestamp: { type: 'string', format: 'date-time' },
+    },
+  },
   ErrorResponse: {
     type: 'object',
     required: ['error'],

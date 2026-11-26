@@ -13,4 +13,6 @@ const orderSchema = new mongoose.Schema({
   priority: { type: String, required: true, enum: Object.values(ORDER_PRIORITY) },
 });
 
+orderSchema.index({ status: 1, _id: 1 });
+
 module.exports = mongoose.model('Order', orderSchema);

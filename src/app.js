@@ -4,6 +4,7 @@ const userRoutes = require('./routes/user.routes');
 const orderRoutes = require('./routes/order.routes');
 const deliveryRoutes = require('./routes/delivery.routes');
 const docsRoutes = require('./routes/docs.routes');
+const healthRoutes = require('./routes/health.routes');
 const mockRoutes = require('./routes/mock.routes');
 const loggerRoutes = require('./routes/logger.routes');
 const logRequest = require('./middlewares/request-log.middleware');
@@ -18,6 +19,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/docs', docsRoutes);
+app.use('/api/health', healthRoutes);
 app.use('/api/mocks', mockRoutes);
 app.use('/api/logger', loggerRoutes);
 

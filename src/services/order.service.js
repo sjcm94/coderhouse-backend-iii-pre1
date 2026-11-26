@@ -1,3 +1,4 @@
+const { pagination } = require('./pagination');
 const orderRepository = require('../repositories/order.repository');
 const userRepository = require('../repositories/user.repository');
 const { logger } = require('../config/logger');
@@ -5,9 +6,10 @@ const AppError = require('../errors/app.error');
 const { ORDER_STATUS, ORDER_PRIORITY, USER_ROLES } = require('../constants');
 const { validateId, validateStatus } = require('./shipment-validation');
 
-function getAll(status) {
+function getAll(query = {}) {
+  const { status } = query;
   validateStatus(status, ORDER_STATUS);
-  return orderRepository.getAll(status);
+  return orderRepository.getAll(status, pagination(query));
 }
 
 async function getById(id) {

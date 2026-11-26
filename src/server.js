@@ -3,7 +3,7 @@ const { logger, configureLogger } = require('./config/logger');
 
 async function start() {
   const config = require('./config');
-  configureLogger(config.nodeEnv);
+  configureLogger(config.logLevel);
 
   const database = require('./repositories/database');
   const app = require('./app');
@@ -16,14 +16,36 @@ async function start() {
     });
   }
 
+  const server = app.listen(config.port, '0.0.0.0');
   try {
-    const server = app.listen(config.port);
     await once(server, 'listening');
   } catch (error) {
     throw new Error(`No se pudo abrir el puerto ${config.port} (${error.code}).`, { cause: error });
   }
 
   logger.info(`ShipNow está escuchando en el puerto ${config.port}`, { entorno: config.nodeEnv });
+
+  let closing = false;
+  function shutdown(signal) {
+    if (closing) return;
+    closing = true;
+    logger.info('Cerrando ShipNow', { signal });
+
+    server.close(async (error) => {
+      try {
+        if (error) throw error;
+        await database.disconnect();
+      } catch {
+        process.exitCode = 1;
+        logger.error('No se pudo cerrar ShipNow correctamente');
+      } finally {
+        logger.end();
+      }
+    });
+  }
+
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
+  process.once('SIGINT', () => shutdown('SIGINT'));
 }
 
 start().catch(async (error) => {

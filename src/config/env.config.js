@@ -28,10 +28,23 @@ if (!['development', 'test', 'production'].includes(nodeEnv)) {
   throw new Error('NODE_ENV debe ser development, test o production.');
 }
 
+const logLevel = process.env.LOG_LEVEL?.trim() || (nodeEnv === 'production' ? 'info' : 'debug');
+if (!['fatal', 'error', 'warning', 'info', 'http', 'debug'].includes(logLevel)) {
+  throw new Error('LOG_LEVEL debe ser fatal, error, warning, info, http o debug.');
+}
+
+const swaggerFlag = process.env.SWAGGER_ENABLED?.trim();
+if (swaggerFlag && !['true', 'false'].includes(swaggerFlag)) {
+  throw new Error('SWAGGER_ENABLED debe ser true o false.');
+}
+const swaggerEnabled = swaggerFlag ? swaggerFlag === 'true' : nodeEnv !== 'production';
+
 const uploadsDir = path.resolve(process.env.UPLOADS_DIR?.trim() || path.join(__dirname, '../../uploads'));
 
 module.exports = Object.freeze({
   uploadsDir,
+  logLevel,
+  swaggerEnabled,
   port,
   mongoUri,
   nodeEnv,

@@ -16,4 +16,6 @@ const deliverySchema = new mongoose.Schema({
   status: { type: String, required: true, enum: Object.values(DELIVERY_STATUS) },
 });
 
+deliverySchema.index({ status: 1, _id: 1 });
+
 module.exports = mongoose.model('Delivery', deliverySchema);

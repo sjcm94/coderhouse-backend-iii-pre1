@@ -189,7 +189,7 @@ Los listados usan proyecciones e índices. El catálogo filtra el stock en Mongo
 
 ### Variables y ejecución local
 
-Copia `.env.example` a `.env`, configura las variables y ejecuta `npm ci` y `npm start`. Para ejecutar la suite, usa `npm test` con el entorno y MongoDB de pruebas del Módulo 6.
+Copia `.env.example` a `.env`, configura las variables y ejecuta `npm ci` y `npm start`. Para ejecutar la suite con MongoDB de pruebas, instala también las dependencias de desarrollo con `npm ci --include=dev` y ejecuta `npm test` en la raíz del repositorio. La imagen Docker instala solo dependencias de ejecución, así que las pruebas se corren en el entorno local descrito en el Módulo 6.
 
 | Variable | Uso |
 | --- | --- |
@@ -208,6 +208,18 @@ MongoDB es el único servicio externo de esta versión. La API del proyecto aún
 - `GET /api/health` informa el estado del proceso, el entorno, el uptime en segundos y la fecha. Es una comprobación de que la API responde y no consulta MongoDB.
 - En `development` y `test` están disponibles las rutas de mocks y la prueba de logger. En `production`, los GET de mocks y `/api/logger/test` devuelven 404, y la carga `POST /api/mocks/seed` devuelve 403.
 - Swagger está en `/api/docs/`, con su JSON en `/api/docs/openapi.json`. Por defecto se habilita en desarrollo y pruebas. En producción devuelve 404 salvo que actives `SWAGGER_ENABLED=true` para una revisión controlada.
+
+### Comprobar la entrega
+
+| Petición | Resultado esperado |
+| --- | --- |
+| `GET /api/health` | 200 con `status`, `environment`, `uptime` y `timestamp`. |
+| `GET /api/users?page=2&limit=5` con al menos 10 usuarios | 200 con cinco usuarios de la segunda página. |
+| `GET /api/users?limit=0` o `GET /api/users?limit=1000` | 400 con `INVALID_PAGINATION`. |
+| `GET /api/mocks/users` en producción | 404. |
+| `GET /api/docs/` en producción | 404 por defecto y 200 con `SWAGGER_ENABLED=true`. |
+
+En OpenAPI, revisa **Health** y los parámetros `page` y `limit` de los cuatro listados. Las pruebas del módulo están en `tests/deployment.test.js`.
 
 ### Construir y ejecutar con Docker
 

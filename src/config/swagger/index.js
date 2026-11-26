@@ -20,6 +20,7 @@ module.exports = {
     { name: 'Mocks', description: 'Generación y carga de datos de prueba' },
     { name: 'Logger', description: 'Validación de niveles de logging' },
     { name: 'Products', description: 'Catálogo de productos' },
+    { name: 'Health', description: 'Estado del proceso de ShipNow' },
   ],
   paths,
   components: { schemas },

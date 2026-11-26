@@ -8,4 +8,6 @@ const productSchema = new mongoose.Schema({
   status: { type: String, required: true, enum: Object.values(PRODUCT_STATUS) },
 });
 
+productSchema.index({ name: 1, _id: 1 }, { partialFilterExpression: { stock: { $gt: 0 } } });
+
 module.exports = mongoose.model('Product', productSchema);

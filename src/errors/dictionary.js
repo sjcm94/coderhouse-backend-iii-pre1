@@ -24,6 +24,7 @@ module.exports = Object.freeze({
   INVALID_FILE_TYPE: { status: 415, message: 'El archivo debe ser PDF, JPEG o PNG y coincidir con su tipo declarado.' },
   FILE_TOO_LARGE: { status: 413, message: 'El archivo no debe superar los 2 MiB.' },
   FILE_SAVE_FAILED: { status: 500, message: 'No se pudo guardar y asociar el archivo.' },
+  INVALID_PAGINATION: { status: 400, message: 'page debe ser un entero entre 1 y 1000 y limit entre 1 y 100.' },
   INVALID_JSON: { status: 400, message: 'El cuerpo debe contener JSON válido.' },
   BODY_TOO_LARGE: { status: 413, message: 'El cuerpo de la petición supera el tamaño permitido.' },
   UNSUPPORTED_BODY_ENCODING: { status: 415, message: 'La codificación del cuerpo de la petición no es compatible.' },

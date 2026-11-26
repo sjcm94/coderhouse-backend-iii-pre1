@@ -5,7 +5,7 @@ const path = require('node:path');
 const runNode = promisify(execFile);
 const root = path.join(__dirname, '../..');
 
-async function requestInProduction(method, route) {
+async function requestInProduction(method, route, swaggerEnabled = '') {
   const script = `
     const { logger } = require('./src/config/logger');
     logger.silent = true;
@@ -21,7 +21,7 @@ async function requestInProduction(method, route) {
   `;
   const { stdout } = await runNode(process.execPath, ['-e', script, method, route], {
     cwd: root,
-    env: { ...process.env, NODE_ENV: 'production' },
+    env: { ...process.env, NODE_ENV: 'production', SWAGGER_ENABLED: swaggerEnabled },
     timeout: 5000,
   });
   return JSON.parse(stdout);

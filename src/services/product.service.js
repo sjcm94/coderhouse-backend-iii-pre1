@@ -1,10 +1,10 @@
+const { pagination } = require('./pagination');
 const AppError = require('../errors/app.error');
 const productRepository = require('../repositories/product.repository');
 const { PRODUCT_STATUS } = require('../utils/constants');
 
-async function getAll() {
-  const products = await productRepository.getAll();
-  return products.filter((product) => product.stock > 0);
+function getAll(query) {
+  return productRepository.getAll(pagination(query));
 }
 
 async function create(data = {}) {

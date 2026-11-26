@@ -1,6 +1,7 @@
 const errors = require('../../errors/dictionary');
 const { ORDER_STATUS, DELIVERY_STATUS, DOCUMENT_TYPE } = require('../../constants');
 const { ref, arrayOf, id, values } = require('./schemas');
+const { DEFAULT_LIMIT, MAX_LIMIT, MAX_PAGE } = require('../../services/pagination');
 const { FILE_FIELD, SUPPORTED_FILES } = require('../upload.config');
 
 function success(description, schema) {
@@ -53,6 +54,13 @@ function statusParameter(statuses) {
   }];
 }
 
+const pageParameters = [
+  { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, maximum: MAX_PAGE, default: 1 } },
+  { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT } },
+];
+const invalidPagination = errorResponse('Paginación inválida.', 'INVALID_PAGINATION');
+const privateRoute = errorResponse('Ruta interna deshabilitada en producción.', 'ROUTE_NOT_FOUND');
+
 const idParameter = [{ name: 'id', in: 'path', required: true, schema: id }];
 const quantity = {
   name: 'qty',
@@ -62,7 +70,6 @@ const quantity = {
 };
 const invalidQuantity = errorResponse('Cantidad inválida.', 'INVALID_MOCK_QUANTITY');
 const internalError = errorResponse('Falla inesperada del servidor.', 'INTERNAL_ERROR');
-const invalidStatus = errorResponse('Estado no permitido.', 'INVALID_STATUS');
 const invalidId = errorResponse('ID con formato inválido.', 'INVALID_ID');
 const bodyErrors = {
   413: errorResponse('El cuerpo supera el tamaño permitido.', 'BODY_TOO_LARGE'),
@@ -76,12 +83,22 @@ const uploadErrors = {
 };
 
 module.exports = {
+  '/api/health': {
+    get: {
+      tags: ['Health'],
+      summary: 'Consultar si el proceso de la API responde',
+      description: 'Indica estado, entorno, segundos de actividad y fecha del servidor.',
+      responses: { 200: success('La API está activa.', ref('HealthResponse')) },
+    },
+  },
   '/api/users': {
     get: {
       tags: ['Users'],
       summary: 'Listar usuarios registrados',
+      parameters: pageParameters,
       responses: {
         200: success('Lista de usuarios.', arrayOf('User')),
+        400: invalidPagination,
         500: internalError,
       },
     },
@@ -123,8 +140,10 @@ module.exports = {
     get: {
       tags: ['Products'],
       summary: 'Listar productos con stock',
+      parameters: pageParameters,
       responses: {
         200: success('Lista de productos disponibles.', arrayOf('Product')),
+        400: invalidPagination,
         500: internalError,
       },
     },
@@ -145,10 +164,10 @@ module.exports = {
     get: {
       tags: ['Orders'],
       summary: 'Listar pedidos guardados',
-      parameters: statusParameter(ORDER_STATUS),
+      parameters: [...statusParameter(ORDER_STATUS), ...pageParameters],
       responses: {
         200: success('Lista de pedidos.', arrayOf('Order')),
-        400: invalidStatus,
+        400: errorResponse('Estado o paginación inválidos.', 'INVALID_STATUS', 'INVALID_PAGINATION'),
         500: internalError,
       },
     },
@@ -186,10 +205,10 @@ module.exports = {
     get: {
       tags: ['Deliveries'],
       summary: 'Listar entregas guardadas',
-      parameters: statusParameter(DELIVERY_STATUS),
+      parameters: [...statusParameter(DELIVERY_STATUS), ...pageParameters],
       responses: {
         200: success('Lista de entregas.', arrayOf('Delivery')),
-        400: invalidStatus,
+        400: errorResponse('Estado o paginación inválidos.', 'INVALID_STATUS', 'INVALID_PAGINATION'),
         500: internalError,
       },
     },
@@ -234,6 +253,7 @@ module.exports = {
       responses: {
         200: success('Usuarios generados.', arrayOf('MockUser')),
         400: invalidQuantity,
+        404: privateRoute,
         500: internalError,
       },
     },
@@ -247,6 +267,7 @@ module.exports = {
       responses: {
         200: success('Lote generado.', ref('MockBatch')),
         400: invalidQuantity,
+        404: privateRoute,
         500: internalError,
       },
     },

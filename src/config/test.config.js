@@ -22,6 +22,8 @@ function loadTestEnvironment() {
   process.env.PORT = '3000';
   process.env.MONGODB_URI = mongoUri;
   process.env.NODE_ENV = 'test';
+  process.env.SWAGGER_ENABLED = 'true';
+  process.env.LOG_LEVEL = 'debug';
   process.env.UPLOADS_DIR = uploadsDir;
 
   return { mongoUri, dbName, uploadsDir };

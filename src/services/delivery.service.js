@@ -1,12 +1,14 @@
+const { pagination } = require('./pagination');
 const deliveryRepository = require('../repositories/delivery.repository');
 const AppError = require('../errors/app.error');
 const { DELIVERY_STATUS, DOCUMENT_TYPE } = require('../constants');
 const { validateId, validateStatus } = require('./shipment-validation');
 const { validateFile, associateFile } = require('./upload.service');
 
-function getAll(status) {
+function getAll(query = {}) {
+  const { status } = query;
   validateStatus(status, DELIVERY_STATUS);
-  return deliveryRepository.getAll(status);
+  return deliveryRepository.getAll(status, pagination(query));
 }
 
 async function getById(id) {

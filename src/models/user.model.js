@@ -9,4 +9,6 @@ const userSchema = new mongoose.Schema({
   role: { type: String, required: true, enum: Object.values(USER_ROLES) },
 });
 
+userSchema.index({ name: 1, _id: 1 });
+
 module.exports = mongoose.model('User', userSchema);

@@ -2,8 +2,13 @@ const Product = require('../models/product.model');
 
 const fields = '_id name price stock status';
 
-function getAll() {
-  return Product.find().select(fields).sort({ name: 1, _id: 1 }).lean();
+function getAll({ skip, limit }) {
+  return Product.find({ stock: { $gt: 0 } })
+    .select(fields)
+    .sort({ name: 1, _id: 1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 }
 
 async function create(data) {

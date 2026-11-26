@@ -39,8 +39,8 @@ logger.on('error', () => {
   process.stderr.write('Winston no pudo escribir en el archivo de logs.\n');
 });
 
-function configureLogger(nodeEnv) {
-  consoleTransport.level = nodeEnv === 'production' ? 'info' : 'debug';
+function configureLogger(level) {
+  consoleTransport.level = level;
 }
 
 module.exports = { logger, configureLogger };
